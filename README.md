@@ -1,20 +1,17 @@
-# 見える時計 最終改良版（JSはTXT）
+# 見える時計 大きめ表示版（JSはTXT）
 
-これは、前の「最終改良版」に戻した時計アプリです。
+時計が小さく見える問題を直した版です。
 
-入っている機能:
-- 秒数に合わせて背景が下からせり上がる
-- 0秒に戻ると背景も下に戻る
-- 色変更
-- UIサイズ変更
-- 全画面ボタン
-- ダブルタップでボタン非表示 / 再表示
-- 設定の自動保存
-- iPhoneのSafariでホーム画面に追加しやすい構成
+変更点:
+- 中央の時刻文字をかなり大きく表示
+- UIサイズの最大値を 180 まで拡大
+- iPhoneの横幅で円が頭打ちになっても、時刻文字は大きくなるように修正
+- 余白を少し減らして、画面をより大きく使う
+- 既存の古いUIサイズ設定に引っ張られないように保存キーを変更
 
-## GitHubに置くファイル
+## GitHubに置くとき
 
-リポジトリ直下に以下を置いてください。
+ZIP内の以下をリポジトリ直下にアップロードしてください。
 
 - index.html
 - style.css
@@ -24,30 +21,7 @@
 
 そして、TXTファイルはGitHub上で名前を変えて作ってください。
 
-- script_js.txt の中身 → script.js として作成
-- service_worker_js.txt の中身 → service-worker.js として作成
+- script_js.txt の中身 → script.js
+- service_worker_js.txt の中身 → service-worker.js
 
 ※ ZIP内には .js ファイルを入れていません。
-iPhoneやブラウザで .js のダウンロードが止まることがあるため、今回は .txt にしてあります。
-
-## GitHubでの作り方
-
-1. GitHubで新しいリポジトリを作る
-2. index.html / style.css / manifest.json / icon.svg / apple-touch-icon.png をアップロード
-3. script_js.txt を開いて中身をコピー
-4. GitHubで Add file → Create new file
-5. ファイル名を script.js にして貼り付けて保存
-6. service_worker_js.txt も同じように service-worker.js として作成
-7. Settings → Pages
-8. Source: Deploy from a branch
-9. Branch: main / root
-10. 公開URLをiPhoneのSafariで開く
-11. 共有ボタン → ホーム画面に追加
-
-## 注意
-
-index.html は script.js と service-worker.js を読むように作ってあります。
-そのため、GitHub上では必ず script.js / service-worker.js という名前で作ってください。
-
-index_single_file_reference.html は確認用です。
-GitHub Pagesで使う本体は index.html です。

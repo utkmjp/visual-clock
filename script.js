@@ -1,6 +1,6 @@
 "use strict";
 
-const storageKey = "visualClockRestoredSettings_v1";
+const storageKey = "visualClockBigSettings_v2";
 
 const defaultSettings = {
   bgColor: "#0f1115",
@@ -9,7 +9,7 @@ const defaultSettings = {
   textColor: "#ffffff",
   accentColor: "#ffffff",
   lineColor: "#2a2d35",
-  uiSize: 112
+  uiSize: 145
 };
 
 let settings = loadSettings();
@@ -93,21 +93,22 @@ function updateLayout() {
   const height = window.innerHeight || document.documentElement.clientHeight;
   const scale = settings.uiSize / 100;
 
-  const availableCircleByHeight = height - 205;
-  const availableCircleByWidth = width * 0.88;
+  // 画面幅で円は頭打ちになりやすいので、
+  // 中央の時刻文字もUIサイズに合わせて強めに大きくする。
+  const reservedBelow = clamp(height * 0.18, 118, 190);
+  const circleBase = Math.min(width * 0.97, height - reservedBelow, 820);
+  const hardMax = Math.min(width * 0.985, height - 112, 860);
 
-  let circleSize = Math.min(availableCircleByHeight, availableCircleByWidth, 760);
-  circleSize = circleSize * scale;
+  let circleSize = circleBase * scale;
+  circleSize = clamp(circleSize, 285, Math.max(285, hardMax));
 
-  const hardMax = Math.min(height - 185, width * 0.92, 820);
-  circleSize = clamp(circleSize, 240, Math.max(240, hardMax));
-
-  const timeSize = clamp(circleSize * 0.235, 58, 158);
-  const labelSize = clamp(circleSize * 0.043, 15, 30);
-  const dayLabelSize = clamp(circleSize * 0.043, 15, 29);
-  const dateSize = clamp(circleSize * 0.052, 17, 35);
-  const barWidth = clamp(circleSize * 1.18, Math.min(width * 0.78, 300), Math.min(width * 0.9, 820));
-  const barHeight = clamp(circleSize * 0.064, 20, 48);
+  const textBoost = clamp(scale, 1, 1.8);
+  const timeSize = clamp(circleSize * (0.30 + (textBoost - 1) * 0.11), 92, Math.min(width * 0.50, 210));
+  const labelSize = clamp(circleSize * 0.050, 17, 34);
+  const dayLabelSize = clamp(circleSize * 0.048, 17, 32);
+  const dateSize = clamp(circleSize * 0.058, 20, 38);
+  const barWidth = clamp(circleSize * 1.23, Math.min(width * 0.86, 320), Math.min(width * 0.96, 860));
+  const barHeight = clamp(circleSize * 0.072, 24, 54);
 
   root.style.setProperty("--circle-size", `${Math.round(circleSize)}px`);
   root.style.setProperty("--time-size", `${Math.round(timeSize)}px`);

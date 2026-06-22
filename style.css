@@ -6,13 +6,13 @@
   --line-bg-color: #2a2d35;
   --rise-bg: rgba(255, 255, 255, 0.14);
 
-  --circle-size: 560px;
-  --time-size: 118px;
-  --label-size: 22px;
-  --date-size: 27px;
-  --day-label-size: 22px;
-  --bar-width: 680px;
-  --bar-height: 34px;
+  --circle-size: 620px;
+  --time-size: 150px;
+  --label-size: 24px;
+  --date-size: 29px;
+  --day-label-size: 24px;
+  --bar-width: 760px;
+  --bar-height: 38px;
 }
 
 * {
@@ -60,11 +60,11 @@ body {
   min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: max(18px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  padding: max(10px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
 }
 
 .clock-area {
-  width: min(96vw, 920px);
+  width: min(100vw, 980px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -75,9 +75,9 @@ body {
   position: relative;
   width: var(--circle-size);
   height: var(--circle-size);
-  max-width: 92vw;
-  max-height: 64dvh;
-  margin: 0 auto clamp(18px, 3.8dvh, 44px);
+  max-width: 98vw;
+  max-height: 72dvh;
+  margin: 0 auto clamp(10px, 2.5dvh, 30px);
 }
 
 .hour-ring {
@@ -115,13 +115,13 @@ body {
 .time {
   font-size: var(--time-size);
   font-weight: 820;
-  line-height: 0.95;
+  line-height: 0.88;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 
 .sub-label {
-  margin-top: clamp(10px, 2dvh, 20px);
+  margin-top: clamp(8px, 1.5dvh, 16px);
   font-size: var(--label-size);
   color: var(--muted-color);
   letter-spacing: 0.03em;
@@ -129,7 +129,7 @@ body {
 
 .day-section {
   width: var(--bar-width);
-  max-width: 90vw;
+  max-width: 96vw;
 }
 
 .day-label {
@@ -159,7 +159,7 @@ body {
 }
 
 .date {
-  margin-top: clamp(14px, 3dvh, 28px);
+  margin-top: clamp(10px, 2dvh, 20px);
   color: var(--muted-color);
   font-size: var(--date-size);
   font-weight: 540;
@@ -312,5 +312,21 @@ input[type="range"] {
 
   .settings-panel {
     top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+  }
+}
+
+
+/* スマホでは時刻を最優先で大きく見せる */
+@media (max-width: 480px) {
+  .sub-label {
+    font-size: max(16px, var(--label-size));
+  }
+
+  .day-section {
+    max-width: 96vw;
+  }
+
+  .date {
+    font-size: max(20px, var(--date-size));
   }
 }
