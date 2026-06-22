@@ -1,6 +1,6 @@
 "use strict";
 
-const storageKey = "visualClockLandscapeSettings_v1";
+const storageKey = "visualClockLandscapeTunedSettings_v2";
 
 const defaultSettings = {
   bgColor: "#0f1115",
@@ -9,7 +9,7 @@ const defaultSettings = {
   textColor: "#ffffff",
   accentColor: "#ffffff",
   lineColor: "#2a2d35",
-  uiSize: 145
+  uiSize: 132
 };
 
 let settings = loadSettings();
@@ -92,37 +92,45 @@ function updateLayout() {
   const rawWidth = window.innerWidth || document.documentElement.clientWidth;
   const rawHeight = window.innerHeight || document.documentElement.clientHeight;
 
-  // 縦向きでも中身は横画面として回転表示するため、
-  // レイアウト計算では横長の仮想画面として扱う。
-  const isPortrait = rawHeight > rawWidth;
-  const width = isPortrait ? rawHeight : rawWidth;
-  const height = isPortrait ? rawWidth : rawHeight;
-  const scale = settings.uiSize / 100;
+  // 端末が縦向きでも、アプリ内部は横画面として扱う。
+  const width = Math.max(rawWidth, rawHeight);
+  const height = Math.min(rawWidth, rawHeight);
+  const scale = clamp(settings.uiSize / 100, 0.85, 1.6);
 
-  const reservedBelow = clamp(height * 0.18, 94, 170);
-  const circleBase = Math.min(width * 0.58, height - reservedBelow, 820);
-  const hardMax = Math.min(width * 0.62, height - 76, 860);
+  const edgePadding = clamp(width * 0.025, 18, 34);
+  const gap = clamp(width * 0.038, 20, 48);
 
-  let circleSize = circleBase * scale;
-  circleSize = clamp(circleSize, 250, Math.max(250, hardMax));
+  let sideWidth = clamp(width * 0.36, 260, 460);
+  let circleMaxByWidth = width - sideWidth - gap - edgePadding * 2;
+  let circleMaxByHeight = height - edgePadding * 2;
 
-  const textBoost = clamp(scale, 1, 1.8);
-  const timeSize = clamp(circleSize * (0.31 + (textBoost - 1) * 0.10), 86, Math.min(width * 0.22, 210));
-  const labelSize = clamp(circleSize * 0.050, 16, 32);
-  const dayLabelSize = clamp(circleSize * 0.047, 16, 30);
-  const dateSize = clamp(circleSize * 0.055, 18, 36);
-  const barWidth = clamp(circleSize * 1.45, Math.min(width * 0.58, 320), Math.min(width * 0.78, 900));
-  const barHeight = clamp(circleSize * 0.070, 22, 50);
+  // 狭い横画面では右側情報を少し詰めて、時計を優先する。
+  if (circleMaxByWidth < height * 0.76) {
+    sideWidth = clamp(width * 0.32, 230, 390);
+    circleMaxByWidth = width - sideWidth - gap - edgePadding * 2;
+  }
+
+  const baseCircle = Math.min(circleMaxByWidth, circleMaxByHeight, 620);
+  let circleSize = baseCircle * (0.88 + (scale - 1) * 0.34);
+  circleSize = clamp(circleSize, 250, Math.max(250, Math.min(circleMaxByWidth, circleMaxByHeight)));
+
+  const textRatio = 0.315 + (scale - 1) * 0.08;
+  const timeSize = clamp(circleSize * textRatio, 78, Math.min(circleSize * 0.40, width * 0.18, 200));
+  const labelSize = clamp(circleSize * 0.048, 14, 27);
+  const dayLabelSize = clamp(sideWidth * 0.064, 16, 26);
+  const dateSize = clamp(sideWidth * 0.075, 18, 31);
+  const barHeight = clamp(circleSize * 0.078, 22, 44);
 
   root.style.setProperty("--circle-size", `${Math.round(circleSize)}px`);
   root.style.setProperty("--time-size", `${Math.round(timeSize)}px`);
   root.style.setProperty("--label-size", `${Math.round(labelSize)}px`);
   root.style.setProperty("--day-label-size", `${Math.round(dayLabelSize)}px`);
   root.style.setProperty("--date-size", `${Math.round(dateSize)}px`);
-  root.style.setProperty("--bar-width", `${Math.round(barWidth)}px`);
+  root.style.setProperty("--bar-width", `${Math.round(sideWidth)}px`);
+  root.style.setProperty("--side-width", `${Math.round(sideWidth)}px`);
   root.style.setProperty("--bar-height", `${Math.round(barHeight)}px`);
+  root.style.setProperty("--stage-gap", `${Math.round(gap)}px`);
 }
-
 function syncSecondFill() {
   const now = new Date();
   const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
@@ -205,7 +213,7 @@ els.fullscreenButton.addEventListener("click", async () => {
       await document.exitFullscreen();
     } else if (document.documentElement.requestFullscreen) {
       await document.documentElement.requestFullscreen();
-  tryLockLandscape();
+      tryLockLandscape();
     }
   } catch {
     // iPhone SafariではFullscreen APIが使えない場合がある。
@@ -239,6 +247,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 applySettings();
+tryLockLandscape();
 syncSecondFill();
 updateClock();
 

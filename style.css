@@ -6,45 +6,70 @@
   --line-bg-color: #2a2d35;
   --rise-bg: rgba(255, 255, 255, 0.14);
 
-  --circle-size: 620px;
-  --time-size: 150px;
-  --label-size: 24px;
-  --date-size: 29px;
-  --day-label-size: 24px;
-  --bar-width: 760px;
-  --bar-height: 38px;
+  --circle-size: 360px;
+  --time-size: 122px;
+  --label-size: 18px;
+  --date-size: 24px;
+  --day-label-size: 20px;
+  --bar-width: 320px;
+  --bar-height: 30px;
+  --stage-gap: 34px;
+  --side-width: 320px;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html {
+html,
+body {
+  margin: 0;
+  width: 100%;
   height: 100%;
   background: var(--bg-color);
+  overflow: hidden;
 }
 
 body {
-  margin: 0;
-  min-height: 100%;
-  min-height: 100dvh;
-  overflow: hidden;
-  background: var(--bg-color);
   color: var(--text-color);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
 }
 
-.second-fill {
+/* この箱ごと横画面アプリとして扱う */
+.landscape-stage {
   position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* 縦持ちでも、アプリ全体を横画面として回転表示 */
+@media (orientation: portrait) {
+  .landscape-stage {
+    left: 50%;
+    top: 50%;
+    inset: auto;
+    width: 100dvh;
+    height: 100dvw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center center;
+  }
+}
+
+.second-fill {
+  position: absolute;
   left: 0;
   bottom: 0;
+  z-index: 0;
   width: 100%;
   height: 0%;
   background: var(--rise-bg);
   pointer-events: none;
-  z-index: 0;
   animation: riseMinute 60s linear infinite;
   will-change: height;
 }
@@ -55,18 +80,20 @@ body {
 }
 
 .app {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: max(10px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+  padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
 }
 
 .clock-area {
-  width: min(100vw, 980px);
-  display: flex;
-  flex-direction: column;
+  width: min(calc(100% - 24px), 1180px);
+  height: min(calc(100% - 20px), 720px);
+  display: grid;
+  grid-template-columns: var(--circle-size) var(--side-width);
+  column-gap: var(--stage-gap);
   align-items: center;
   justify-content: center;
 }
@@ -75,9 +102,8 @@ body {
   position: relative;
   width: var(--circle-size);
   height: var(--circle-size);
-  max-width: 98vw;
-  max-height: 72dvh;
-  margin: 0 auto clamp(10px, 2.5dvh, 30px);
+  min-width: 0;
+  min-height: 0;
 }
 
 .hour-ring {
@@ -109,37 +135,51 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transform: translateY(-1%);
 }
 
 .time {
   font-size: var(--time-size);
   font-weight: 820;
-  line-height: 0.88;
-  letter-spacing: -0.04em;
+  line-height: 0.86;
+  letter-spacing: -0.055em;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .sub-label {
-  margin-top: clamp(8px, 1.5dvh, 16px);
-  font-size: var(--label-size);
+  max-width: 88%;
+  margin-top: 10px;
   color: var(--muted-color);
+  font-size: var(--label-size);
+  line-height: 1.2;
   letter-spacing: 0.03em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.side-area {
+  width: var(--side-width);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(18px, 4dvh, 34px);
 }
 
 .day-section {
-  width: var(--bar-width);
-  max-width: 96vw;
+  width: 100%;
 }
 
 .day-label {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
-  margin-bottom: clamp(8px, 1.6dvh, 14px);
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 12px;
   color: var(--muted-color);
   font-size: var(--day-label-size);
-  font-weight: 560;
+  font-weight: 580;
+  white-space: nowrap;
 }
 
 .bar-bg {
@@ -159,50 +199,52 @@ body {
 }
 
 .date {
-  margin-top: clamp(10px, 2dvh, 20px);
   color: var(--muted-color);
   font-size: var(--date-size);
-  font-weight: 540;
+  font-weight: 560;
+  line-height: 1.25;
   letter-spacing: 0.02em;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .top-actions {
-  position: fixed;
-  top: max(14px, env(safe-area-inset-top));
-  right: max(14px, env(safe-area-inset-right));
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
   z-index: 4;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
 .icon-button {
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 15px;
   color: var(--text-color);
   background: rgba(255, 255, 255, 0.14);
   box-shadow: 0 10px 30px rgba(0,0,0,0.22);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  font-size: 24px;
+  font-size: 21px;
   line-height: 1;
   cursor: pointer;
 }
 
 .settings-panel {
-  position: fixed;
-  top: calc(max(14px, env(safe-area-inset-top)) + 64px);
-  right: max(14px, env(safe-area-inset-right));
+  position: absolute;
+  top: max(64px, calc(env(safe-area-inset-top) + 62px));
+  right: max(12px, env(safe-area-inset-right));
   z-index: 5;
-  width: min(340px, calc(100vw - 28px));
-  max-height: calc(100dvh - 92px - env(safe-area-inset-bottom));
+  width: min(320px, calc(100% - 24px));
+  max-height: calc(100% - 76px - env(safe-area-inset-bottom));
   overflow: auto;
-  padding: 18px;
-  border-radius: 24px;
+  padding: 16px;
+  border-radius: 22px;
   color: white;
-  background: rgba(18, 19, 24, 0.86);
+  background: rgba(18, 19, 24, 0.88);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -218,11 +260,11 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .panel-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 760;
 }
 
@@ -249,9 +291,9 @@ body {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 16px;
-  margin: 14px 0;
-  font-size: 15px;
+  gap: 14px;
+  margin: 12px 0;
+  font-size: 14px;
 }
 
 input[type="color"] {
@@ -264,19 +306,19 @@ input[type="color"] {
 }
 
 input[type="range"] {
-  width: 142px;
+  width: 138px;
   accent-color: var(--accent-color);
 }
 
 .reset-button {
   width: 100%;
-  margin-top: 12px;
-  padding: 12px 14px;
+  margin-top: 10px;
+  padding: 11px 14px;
   border: 0;
   border-radius: 999px;
   color: white;
   background: rgba(255,255,255,0.16);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -288,92 +330,25 @@ input[type="range"] {
   transform: translateY(-8px);
 }
 
-@media (orientation: landscape) and (max-height: 560px) {
-  .clock-area {
-    transform: translateY(4px);
-  }
-
-  .circle-wrap {
-    max-height: 58dvh;
-    margin-bottom: 12px;
-  }
-
-  .date {
-    margin-top: 10px;
-  }
-}
-
-@media (max-width: 420px) {
-  .icon-button {
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
-  }
-
-  .settings-panel {
-    top: calc(max(12px, env(safe-area-inset-top)) + 58px);
-  }
-}
-
-
-/* スマホでは時刻を最優先で大きく見せる */
-@media (max-width: 480px) {
+/* かなり小さい横画面では、下の説明より時計の見やすさを優先 */
+@media (max-height: 360px) {
   .sub-label {
-    font-size: max(16px, var(--label-size));
+    margin-top: 7px;
   }
 
-  .day-section {
-    max-width: 96vw;
+  .side-area {
+    gap: 14px;
   }
 
-  .date {
-    font-size: max(20px, var(--date-size));
-  }
-}
-
-
-/* 縦持ちでも中身を横画面として表示する */
-@media (orientation: portrait) {
-  body {
-    overflow: hidden;
-  }
-
-  .app {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    width: 100dvh;
-    height: 100dvw;
-    max-width: none;
-    transform: translate(-50%, -50%) rotate(90deg);
-    transform-origin: center center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: max(10px, env(safe-area-inset-left)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-top));
-    box-sizing: border-box;
-  }
-
-  .controls {
-    transform: rotate(90deg);
-    transform-origin: center center;
-    right: max(18px, env(safe-area-inset-top));
-    top: max(18px, env(safe-area-inset-right));
+  .icon-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    font-size: 19px;
   }
 
   .settings-panel {
-    transform: rotate(90deg);
-    transform-origin: top right;
-    right: max(18px, env(safe-area-inset-top));
-    top: max(92px, calc(env(safe-area-inset-right) + 92px));
-    max-height: min(72dvh, 520px);
-  }
-}
-
-/* 横向き時は通常表示 */
-@media (orientation: landscape) {
-  .app {
-    transform: none;
+    top: 54px;
+    max-height: calc(100% - 62px);
   }
 }

@@ -1,6 +1,6 @@
 "use strict";
 
-const cacheName = "visual-clock-restored-v1";
+const cacheName = "visual-clock-landscape-tuned-v2";
 const assets = [
   "./",
   "./index.html",

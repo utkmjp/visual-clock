@@ -16,87 +16,91 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <div class="second-fill" id="secondFill" aria-hidden="true"></div>
+  <div class="landscape-stage" id="landscapeStage">
+    <div class="second-fill" id="secondFill" aria-hidden="true"></div>
 
-  <main class="app" id="app">
-    <section class="clock-area" aria-label="時計">
-      <div class="circle-wrap">
-        <svg class="hour-ring" viewBox="0 0 320 320" aria-hidden="true">
-          <circle class="ring-bg" cx="160" cy="160" r="135"></circle>
-          <circle class="ring-progress" id="hourCircle" cx="160" cy="160" r="135"></circle>
-        </svg>
+    <main class="app" id="app">
+      <section class="clock-area" aria-label="時計">
+        <div class="circle-wrap">
+          <svg class="hour-ring" viewBox="0 0 320 320" aria-hidden="true">
+            <circle class="ring-bg" cx="160" cy="160" r="135"></circle>
+            <circle class="ring-progress" id="hourCircle" cx="160" cy="160" r="135"></circle>
+          </svg>
 
-        <div class="time-layer">
-          <div class="time" id="time">00:00</div>
-          <div class="sub-label">この1時間の進み具合</div>
+          <div class="time-layer">
+            <div class="time" id="time">00:00</div>
+            <div class="sub-label">この1時間の進み具合</div>
+          </div>
         </div>
-      </div>
 
-      <section class="day-section" aria-label="今日の進み具合">
-        <div class="day-label">
-          <span>今日の進み具合</span>
-          <span id="dayPercent">0%</span>
-        </div>
-        <div class="bar-bg">
-          <div class="bar-fill" id="dayBar"></div>
+        <div class="side-area">
+          <section class="day-section" aria-label="今日の進み具合">
+            <div class="day-label">
+              <span>今日の進み具合</span>
+              <span id="dayPercent">0%</span>
+            </div>
+            <div class="bar-bg">
+              <div class="bar-fill" id="dayBar"></div>
+            </div>
+          </section>
+
+          <div class="date" id="date">0000年0月0日</div>
         </div>
       </section>
+    </main>
 
-      <div class="date" id="date">0000年0月0日</div>
-    </section>
-  </main>
-
-  <div class="top-actions" id="topActions">
-    <button class="icon-button" id="fullscreenButton" type="button" aria-label="全画面">⛶</button>
-    <button class="icon-button" id="settingsButton" type="button" aria-label="設定">⚙</button>
-  </div>
-
-  <aside class="settings-panel" id="settingsPanel" aria-label="設定パネル">
-    <div class="panel-head">
-      <div>
-        <div class="panel-title">表示設定</div>
-        <div class="panel-note">ダブルタップでボタン非表示</div>
-      </div>
-      <button class="close-button" id="closeSettingsButton" type="button" aria-label="閉じる">×</button>
+    <div class="top-actions" id="topActions">
+      <button class="icon-button" id="fullscreenButton" type="button" aria-label="全画面">⛶</button>
+      <button class="icon-button" id="settingsButton" type="button" aria-label="設定">⚙</button>
     </div>
 
-    <label class="setting-row">
-      <span>UIサイズ</span>
-      <input id="uiSize" type="range" min="90" max="180" step="1">
-    </label>
+    <aside class="settings-panel" id="settingsPanel" aria-label="設定パネル">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">表示設定</div>
+          <div class="panel-note">ダブルタップでボタン非表示</div>
+        </div>
+        <button class="close-button" id="closeSettingsButton" type="button" aria-label="閉じる">×</button>
+      </div>
 
-    <label class="setting-row">
-      <span>背景</span>
-      <input id="bgColor" type="color">
-    </label>
+      <label class="setting-row">
+        <span>UIサイズ</span>
+        <input id="uiSize" type="range" min="85" max="160" step="1">
+      </label>
 
-    <label class="setting-row">
-      <span>せり上がり</span>
-      <input id="riseColor" type="color">
-    </label>
+      <label class="setting-row">
+        <span>背景</span>
+        <input id="bgColor" type="color">
+      </label>
 
-    <label class="setting-row">
-      <span>せり上がり濃さ</span>
-      <input id="riseOpacity" type="range" min="0" max="45" step="1">
-    </label>
+      <label class="setting-row">
+        <span>せり上がり</span>
+        <input id="riseColor" type="color">
+      </label>
 
-    <label class="setting-row">
-      <span>文字</span>
-      <input id="textColor" type="color">
-    </label>
+      <label class="setting-row">
+        <span>せり上がり濃さ</span>
+        <input id="riseOpacity" type="range" min="0" max="45" step="1">
+      </label>
 
-    <label class="setting-row">
-      <span>円・バー</span>
-      <input id="accentColor" type="color">
-    </label>
+      <label class="setting-row">
+        <span>文字</span>
+        <input id="textColor" type="color">
+      </label>
 
-    <label class="setting-row">
-      <span>下地ライン</span>
-      <input id="lineColor" type="color">
-    </label>
+      <label class="setting-row">
+        <span>円・バー</span>
+        <input id="accentColor" type="color">
+      </label>
 
-    <button class="reset-button" id="resetButton" type="button">初期設定に戻す</button>
-  </aside>
+      <label class="setting-row">
+        <span>下地ライン</span>
+        <input id="lineColor" type="color">
+      </label>
+
+      <button class="reset-button" id="resetButton" type="button">初期設定に戻す</button>
+    </aside>
+  </div>
 
   <script src="./script.js"></script>
 </body>
