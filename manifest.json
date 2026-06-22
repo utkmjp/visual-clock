@@ -1,11 +1,11 @@
 {
   "name": "見える時計",
   "short_name": "見える時計",
-  "description": "置いとくだけで時間の進み具合が見える時計アプリ",
+  "description": "置いとくだけで時間の進み具合が見える縦画面時計アプリ",
   "start_url": "./",
   "scope": "./",
-  "display": "fullscreen",
-  "orientation": "landscape",
+  "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0f1115",
   "theme_color": "#0f1115",
   "icons": [

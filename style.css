@@ -6,70 +6,44 @@
   --line-bg-color: #2a2d35;
   --rise-bg: rgba(255, 255, 255, 0.14);
 
-  --circle-size: 360px;
-  --time-size: 122px;
-  --label-size: 18px;
-  --date-size: 24px;
-  --day-label-size: 20px;
-  --bar-width: 320px;
-  --bar-height: 30px;
-  --stage-gap: 34px;
-  --side-width: 320px;
+  --circle-size: 640px;
+  --time-size: 166px;
+  --date-size: 29px;
+  --day-label-size: 24px;
+  --bar-width: 760px;
+  --bar-height: 38px;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html,
-body {
-  margin: 0;
-  width: 100%;
+html {
   height: 100%;
   background: var(--bg-color);
-  overflow: hidden;
 }
 
 body {
+  margin: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-color);
   color: var(--text-color);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
 }
 
-/* この箱ごと横画面アプリとして扱う */
-.landscape-stage {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100dvh;
-  overflow: hidden;
-  background: var(--bg-color);
-  color: var(--text-color);
-}
-
-/* 縦持ちでも、アプリ全体を横画面として回転表示 */
-@media (orientation: portrait) {
-  .landscape-stage {
-    left: 50%;
-    top: 50%;
-    inset: auto;
-    width: 100dvh;
-    height: 100dvw;
-    transform: translate(-50%, -50%) rotate(90deg);
-    transform-origin: center center;
-  }
-}
-
 .second-fill {
-  position: absolute;
+  position: fixed;
   left: 0;
   bottom: 0;
-  z-index: 0;
   width: 100%;
   height: 0%;
   background: var(--rise-bg);
   pointer-events: none;
+  z-index: 0;
   animation: riseMinute 60s linear infinite;
   will-change: height;
 }
@@ -80,20 +54,18 @@ body {
 }
 
 .app {
-  position: absolute;
-  inset: 0;
+  position: relative;
   z-index: 1;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  padding: max(10px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
 }
 
 .clock-area {
-  width: min(calc(100% - 24px), 1180px);
-  height: min(calc(100% - 20px), 720px);
-  display: grid;
-  grid-template-columns: var(--circle-size) var(--side-width);
-  column-gap: var(--stage-gap);
+  width: min(100vw, 980px);
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
@@ -102,8 +74,9 @@ body {
   position: relative;
   width: var(--circle-size);
   height: var(--circle-size);
-  min-width: 0;
-  min-height: 0;
+  max-width: 98vw;
+  max-height: 72dvh;
+  margin: 0 auto clamp(8px, 2dvh, 24px);
 }
 
 .hour-ring {
@@ -140,46 +113,25 @@ body {
 .time {
   font-size: var(--time-size);
   font-weight: 820;
-  line-height: 0.86;
-  letter-spacing: -0.055em;
+  line-height: 0.88;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
-.sub-label {
-  max-width: 88%;
-  margin-top: 10px;
-  color: var(--muted-color);
-  font-size: var(--label-size);
-  line-height: 1.2;
-  letter-spacing: 0.03em;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.side-area {
-  width: var(--side-width);
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: clamp(18px, 4dvh, 34px);
-}
 
 .day-section {
-  width: 100%;
+  width: var(--bar-width);
+  max-width: 96vw;
 }
 
 .day-label {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: 18px;
+  margin-bottom: clamp(8px, 1.6dvh, 14px);
   color: var(--muted-color);
   font-size: var(--day-label-size);
-  font-weight: 580;
-  white-space: nowrap;
+  font-weight: 560;
 }
 
 .bar-bg {
@@ -199,52 +151,50 @@ body {
 }
 
 .date {
+  margin-top: clamp(8px, 1.7dvh, 18px);
   color: var(--muted-color);
   font-size: var(--date-size);
-  font-weight: 560;
-  line-height: 1.25;
+  font-weight: 540;
   letter-spacing: 0.02em;
-  text-align: center;
-  white-space: nowrap;
 }
 
 .top-actions {
-  position: absolute;
-  top: max(12px, env(safe-area-inset-top));
-  right: max(12px, env(safe-area-inset-right));
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
   z-index: 4;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
 .icon-button {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border: 0;
-  border-radius: 15px;
+  border-radius: 18px;
   color: var(--text-color);
   background: rgba(255, 255, 255, 0.14);
   box-shadow: 0 10px 30px rgba(0,0,0,0.22);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  font-size: 21px;
+  font-size: 24px;
   line-height: 1;
   cursor: pointer;
 }
 
 .settings-panel {
-  position: absolute;
-  top: max(64px, calc(env(safe-area-inset-top) + 62px));
-  right: max(12px, env(safe-area-inset-right));
+  position: fixed;
+  top: calc(max(14px, env(safe-area-inset-top)) + 64px);
+  right: max(14px, env(safe-area-inset-right));
   z-index: 5;
-  width: min(320px, calc(100% - 24px));
-  max-height: calc(100% - 76px - env(safe-area-inset-bottom));
+  width: min(340px, calc(100vw - 28px));
+  max-height: calc(100dvh - 92px - env(safe-area-inset-bottom));
   overflow: auto;
-  padding: 16px;
-  border-radius: 22px;
+  padding: 18px;
+  border-radius: 24px;
   color: white;
-  background: rgba(18, 19, 24, 0.88);
+  background: rgba(18, 19, 24, 0.86);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -260,11 +210,11 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .panel-title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 760;
 }
 
@@ -291,9 +241,9 @@ body {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 14px;
-  margin: 12px 0;
-  font-size: 14px;
+  gap: 16px;
+  margin: 14px 0;
+  font-size: 15px;
 }
 
 input[type="color"] {
@@ -306,19 +256,19 @@ input[type="color"] {
 }
 
 input[type="range"] {
-  width: 138px;
+  width: 142px;
   accent-color: var(--accent-color);
 }
 
 .reset-button {
   width: 100%;
-  margin-top: 10px;
-  padding: 11px 14px;
+  margin-top: 12px;
+  padding: 12px 14px;
   border: 0;
   border-radius: 999px;
   color: white;
   background: rgba(255,255,255,0.16);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -330,25 +280,73 @@ input[type="range"] {
   transform: translateY(-8px);
 }
 
-/* かなり小さい横画面では、下の説明より時計の見やすさを優先 */
-@media (max-height: 360px) {
-  .sub-label {
-    margin-top: 7px;
+@media (orientation: landscape) and (max-height: 560px) {
+  .clock-area {
+    transform: translateY(4px);
   }
 
-  .side-area {
-    gap: 14px;
+  .circle-wrap {
+    max-height: 58dvh;
+    margin-bottom: 12px;
   }
 
+  .date {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 420px) {
   .icon-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 14px;
-    font-size: 19px;
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
   }
 
   .settings-panel {
-    top: 54px;
-    max-height: calc(100% - 62px);
+    top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+  }
+}
+
+
+/* スマホでは時刻を最優先で大きく見せる */
+@media (max-width: 480px) {
+  .sub-label {
+    font-size: max(16px, var(--label-size));
+  }
+
+  .day-section {
+    max-width: 96vw;
+  }
+
+  .date {
+    font-size: max(20px, var(--date-size));
+  }
+}
+
+
+/* 縦画面専用に戻すための調整 */
+@media (orientation: portrait) {
+  .clock-area {
+    flex-direction: column;
+  }
+
+  .circle-wrap {
+    max-width: 99vw;
+    max-height: 74dvh;
+  }
+}
+
+/* 横向きにしても回転表示はしない。自然な縦積みのまま表示する */
+@media (orientation: landscape) {
+  .app,
+  .clock-area,
+  .circle-wrap,
+  .top-actions,
+  .settings-panel {
+    transform: none;
+  }
+
+  .circle-wrap {
+    max-height: 68dvh;
   }
 }

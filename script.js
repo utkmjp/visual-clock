@@ -1,6 +1,6 @@
 "use strict";
 
-const storageKey = "visualClockLandscapeTunedSettings_v2";
+const storageKey = "visualClockVerticalCleanSettings_v1";
 
 const defaultSettings = {
   bgColor: "#0f1115",
@@ -9,7 +9,7 @@ const defaultSettings = {
   textColor: "#ffffff",
   accentColor: "#ffffff",
   lineColor: "#2a2d35",
-  uiSize: 132
+  uiSize: 145
 };
 
 let settings = loadSettings();
@@ -89,48 +89,34 @@ function clamp(value, min, max) {
 
 function updateLayout() {
   const root = document.documentElement;
-  const rawWidth = window.innerWidth || document.documentElement.clientWidth;
-  const rawHeight = window.innerHeight || document.documentElement.clientHeight;
+  const width = window.innerWidth || document.documentElement.clientWidth;
+  const height = window.innerHeight || document.documentElement.clientHeight;
+  const scale = settings.uiSize / 100;
 
-  // 端末が縦向きでも、アプリ内部は横画面として扱う。
-  const width = Math.max(rawWidth, rawHeight);
-  const height = Math.min(rawWidth, rawHeight);
-  const scale = clamp(settings.uiSize / 100, 0.85, 1.6);
+  // 縦画面専用。横画面用の回転・横並び計算は使わない。
+  // 文言を削除したぶん、時計本体に使える高さを少し増やす。
+  const reservedBelow = clamp(height * 0.15, 100, 170);
+  const circleBase = Math.min(width * 0.985, height - reservedBelow, 840);
+  const hardMax = Math.min(width * 0.995, height - 96, 880);
 
-  const edgePadding = clamp(width * 0.025, 18, 34);
-  const gap = clamp(width * 0.038, 20, 48);
+  let circleSize = circleBase * scale;
+  circleSize = clamp(circleSize, 290, Math.max(290, hardMax));
 
-  let sideWidth = clamp(width * 0.36, 260, 460);
-  let circleMaxByWidth = width - sideWidth - gap - edgePadding * 2;
-  let circleMaxByHeight = height - edgePadding * 2;
-
-  // 狭い横画面では右側情報を少し詰めて、時計を優先する。
-  if (circleMaxByWidth < height * 0.76) {
-    sideWidth = clamp(width * 0.32, 230, 390);
-    circleMaxByWidth = width - sideWidth - gap - edgePadding * 2;
-  }
-
-  const baseCircle = Math.min(circleMaxByWidth, circleMaxByHeight, 620);
-  let circleSize = baseCircle * (0.88 + (scale - 1) * 0.34);
-  circleSize = clamp(circleSize, 250, Math.max(250, Math.min(circleMaxByWidth, circleMaxByHeight)));
-
-  const textRatio = 0.315 + (scale - 1) * 0.08;
-  const timeSize = clamp(circleSize * textRatio, 78, Math.min(circleSize * 0.40, width * 0.18, 200));
-  const labelSize = clamp(circleSize * 0.048, 14, 27);
-  const dayLabelSize = clamp(sideWidth * 0.064, 16, 26);
-  const dateSize = clamp(sideWidth * 0.075, 18, 31);
-  const barHeight = clamp(circleSize * 0.078, 22, 44);
+  const textBoost = clamp(scale, 1, 1.8);
+  const timeSize = clamp(circleSize * (0.335 + (textBoost - 1) * 0.10), 104, Math.min(width * 0.55, 230));
+  const dayLabelSize = clamp(circleSize * 0.048, 17, 32);
+  const dateSize = clamp(circleSize * 0.058, 20, 38);
+  const barWidth = clamp(circleSize * 1.23, Math.min(width * 0.86, 320), Math.min(width * 0.96, 860));
+  const barHeight = clamp(circleSize * 0.072, 24, 54);
 
   root.style.setProperty("--circle-size", `${Math.round(circleSize)}px`);
   root.style.setProperty("--time-size", `${Math.round(timeSize)}px`);
-  root.style.setProperty("--label-size", `${Math.round(labelSize)}px`);
   root.style.setProperty("--day-label-size", `${Math.round(dayLabelSize)}px`);
   root.style.setProperty("--date-size", `${Math.round(dateSize)}px`);
-  root.style.setProperty("--bar-width", `${Math.round(sideWidth)}px`);
-  root.style.setProperty("--side-width", `${Math.round(sideWidth)}px`);
+  root.style.setProperty("--bar-width", `${Math.round(barWidth)}px`);
   root.style.setProperty("--bar-height", `${Math.round(barHeight)}px`);
-  root.style.setProperty("--stage-gap", `${Math.round(gap)}px`);
 }
+
 function syncSecondFill() {
   const now = new Date();
   const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
@@ -139,18 +125,6 @@ function syncSecondFill() {
   void els.secondFill.offsetHeight;
   els.secondFill.style.animation = "riseMinute 60s linear infinite";
   els.secondFill.style.animationDelay = `${-seconds}s`;
-}
-
-
-async function tryLockLandscape() {
-  // iPhone Safariでは効かない場合があるため、失敗してもCSS回転表示で横画面化する。
-  try {
-    if (screen.orientation && screen.orientation.lock) {
-      await screen.orientation.lock("landscape");
-    }
-  } catch (error) {
-    // ブラウザ側が許可しない場合は何もしない。
-  }
 }
 
 function updateClock() {
@@ -213,7 +187,6 @@ els.fullscreenButton.addEventListener("click", async () => {
       await document.exitFullscreen();
     } else if (document.documentElement.requestFullscreen) {
       await document.documentElement.requestFullscreen();
-      tryLockLandscape();
     }
   } catch {
     // iPhone SafariではFullscreen APIが使えない場合がある。
@@ -247,7 +220,6 @@ document.addEventListener("visibilitychange", () => {
 });
 
 applySettings();
-tryLockLandscape();
 syncSecondFill();
 updateClock();
 
