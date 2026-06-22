@@ -4,8 +4,8 @@
   "description": "置いとくだけで時間の進み具合が見える時計アプリ",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
-  "orientation": "any",
+  "display": "fullscreen",
+  "orientation": "landscape",
   "background_color": "#0f1115",
   "theme_color": "#0f1115",
   "icons": [

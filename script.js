@@ -1,6 +1,6 @@
 "use strict";
 
-const storageKey = "visualClockBigSettings_v2";
+const storageKey = "visualClockLandscapeSettings_v1";
 
 const defaultSettings = {
   bgColor: "#0f1115",
@@ -89,26 +89,30 @@ function clamp(value, min, max) {
 
 function updateLayout() {
   const root = document.documentElement;
-  const width = window.innerWidth || document.documentElement.clientWidth;
-  const height = window.innerHeight || document.documentElement.clientHeight;
+  const rawWidth = window.innerWidth || document.documentElement.clientWidth;
+  const rawHeight = window.innerHeight || document.documentElement.clientHeight;
+
+  // 縦向きでも中身は横画面として回転表示するため、
+  // レイアウト計算では横長の仮想画面として扱う。
+  const isPortrait = rawHeight > rawWidth;
+  const width = isPortrait ? rawHeight : rawWidth;
+  const height = isPortrait ? rawWidth : rawHeight;
   const scale = settings.uiSize / 100;
 
-  // 画面幅で円は頭打ちになりやすいので、
-  // 中央の時刻文字もUIサイズに合わせて強めに大きくする。
-  const reservedBelow = clamp(height * 0.18, 118, 190);
-  const circleBase = Math.min(width * 0.97, height - reservedBelow, 820);
-  const hardMax = Math.min(width * 0.985, height - 112, 860);
+  const reservedBelow = clamp(height * 0.18, 94, 170);
+  const circleBase = Math.min(width * 0.58, height - reservedBelow, 820);
+  const hardMax = Math.min(width * 0.62, height - 76, 860);
 
   let circleSize = circleBase * scale;
-  circleSize = clamp(circleSize, 285, Math.max(285, hardMax));
+  circleSize = clamp(circleSize, 250, Math.max(250, hardMax));
 
   const textBoost = clamp(scale, 1, 1.8);
-  const timeSize = clamp(circleSize * (0.30 + (textBoost - 1) * 0.11), 92, Math.min(width * 0.50, 210));
-  const labelSize = clamp(circleSize * 0.050, 17, 34);
-  const dayLabelSize = clamp(circleSize * 0.048, 17, 32);
-  const dateSize = clamp(circleSize * 0.058, 20, 38);
-  const barWidth = clamp(circleSize * 1.23, Math.min(width * 0.86, 320), Math.min(width * 0.96, 860));
-  const barHeight = clamp(circleSize * 0.072, 24, 54);
+  const timeSize = clamp(circleSize * (0.31 + (textBoost - 1) * 0.10), 86, Math.min(width * 0.22, 210));
+  const labelSize = clamp(circleSize * 0.050, 16, 32);
+  const dayLabelSize = clamp(circleSize * 0.047, 16, 30);
+  const dateSize = clamp(circleSize * 0.055, 18, 36);
+  const barWidth = clamp(circleSize * 1.45, Math.min(width * 0.58, 320), Math.min(width * 0.78, 900));
+  const barHeight = clamp(circleSize * 0.070, 22, 50);
 
   root.style.setProperty("--circle-size", `${Math.round(circleSize)}px`);
   root.style.setProperty("--time-size", `${Math.round(timeSize)}px`);
@@ -127,6 +131,18 @@ function syncSecondFill() {
   void els.secondFill.offsetHeight;
   els.secondFill.style.animation = "riseMinute 60s linear infinite";
   els.secondFill.style.animationDelay = `${-seconds}s`;
+}
+
+
+async function tryLockLandscape() {
+  // iPhone Safariでは効かない場合があるため、失敗してもCSS回転表示で横画面化する。
+  try {
+    if (screen.orientation && screen.orientation.lock) {
+      await screen.orientation.lock("landscape");
+    }
+  } catch (error) {
+    // ブラウザ側が許可しない場合は何もしない。
+  }
 }
 
 function updateClock() {
@@ -189,6 +205,7 @@ els.fullscreenButton.addEventListener("click", async () => {
       await document.exitFullscreen();
     } else if (document.documentElement.requestFullscreen) {
       await document.documentElement.requestFullscreen();
+  tryLockLandscape();
     }
   } catch {
     // iPhone SafariではFullscreen APIが使えない場合がある。

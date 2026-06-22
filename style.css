@@ -330,3 +330,50 @@ input[type="range"] {
     font-size: max(20px, var(--date-size));
   }
 }
+
+
+/* 縦持ちでも中身を横画面として表示する */
+@media (orientation: portrait) {
+  body {
+    overflow: hidden;
+  }
+
+  .app {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 100dvh;
+    height: 100dvw;
+    max-width: none;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: max(10px, env(safe-area-inset-left)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-top));
+    box-sizing: border-box;
+  }
+
+  .controls {
+    transform: rotate(90deg);
+    transform-origin: center center;
+    right: max(18px, env(safe-area-inset-top));
+    top: max(18px, env(safe-area-inset-right));
+  }
+
+  .settings-panel {
+    transform: rotate(90deg);
+    transform-origin: top right;
+    right: max(18px, env(safe-area-inset-top));
+    top: max(92px, calc(env(safe-area-inset-right) + 92px));
+    max-height: min(72dvh, 520px);
+  }
+}
+
+/* 横向き時は通常表示 */
+@media (orientation: landscape) {
+  .app {
+    transform: none;
+  }
+}
