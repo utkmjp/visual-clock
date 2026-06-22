@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, viewport-fit=cover, initial-scale=1">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="見える時計">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <title>見える時計</title>
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <style>
+:root {
+  --bg-color: #0f1115;
+  --text-color: #ffffff;
+  --muted-color: rgba(255, 255, 255, 0.68);
+  --accent-color: #ffffff;
+  --line-bg-color: #2a2d35;
+  --rise-bg: rgba(255, 255, 255, 0.14);
+
+  --circle-size: 560px;
+  --time-size: 118px;
+  --label-size: 22px;
+  --date-size: 27px;
+  --day-label-size: 22px;
+  --bar-width: 680px;
+  --bar-height: 34px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  background: var(--bg-color);
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+}
+
+.second-fill {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+  background: var(--rise-bg);
+  pointer-events: none;
+  z-index: 0;
+  animation: riseMinute 60s linear infinite;
+  will-change: height;
+}
+
+@keyframes riseMinute {
+  from { height: 0%; }
+  to { height: 100%; }
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: max(18px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+}
+
+.clock-area {
+  width: min(96vw, 920px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-wrap {
+  position: relative;
+  width: var(--circle-size);
+  height: var(--circle-size);
+  max-width: 92vw;
+  max-height: 64dvh;
+  margin: 0 auto clamp(18px, 3.8dvh, 44px);
+}
+
+.hour-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.ring-bg,
+.ring-progress {
+  fill: none;
+  stroke-width: 18;
+}
+
+.ring-bg {
+  stroke: var(--line-bg-color);
+}
+
+.ring-progress {
+  stroke: var(--accent-color);
+  stroke-linecap: round;
+}
+
+.time-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-1%);
+}
+
+.time {
+  font-size: var(--time-size);
+  font-weight: 820;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sub-label {
+  margin-top: clamp(10px, 2dvh, 20px);
+  font-size: var(--label-size);
+  color: var(--muted-color);
+  letter-spacing: 0.03em;
+}
+
+.day-section {
+  width: var(--bar-width);
+  max-width: 90vw;
+}
+
+.day-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: clamp(8px, 1.6dvh, 14px);
+  color: var(--muted-color);
+  font-size: var(--day-label-size);
+  font-weight: 560;
+}
+
+.bar-bg {
+  width: 100%;
+  height: var(--bar-height);
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line-bg-color);
+}
+
+.bar-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-color);
+  transition: width 0.18s linear;
+}
+
+.date {
+  margin-top: clamp(14px, 3dvh, 28px);
+  color: var(--muted-color);
+  font-size: var(--date-size);
+  font-weight: 540;
+  letter-spacing: 0.02em;
+}
+
+.top-actions {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 4;
+  display: flex;
+  gap: 10px;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.icon-button {
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 18px;
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.settings-panel {
+  position: fixed;
+  top: calc(max(14px, env(safe-area-inset-top)) + 64px);
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 5;
+  width: min(340px, calc(100vw - 28px));
+  max-height: calc(100dvh - 92px - env(safe-area-inset-bottom));
+  overflow: auto;
+  padding: 18px;
+  border-radius: 24px;
+  color: white;
+  background: rgba(18, 19, 24, 0.86);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: none;
+}
+
+.settings-panel.open {
+  display: block;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.panel-title {
+  font-size: 18px;
+  font-weight: 760;
+}
+
+.panel-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.56);
+}
+
+.close-button {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  color: white;
+  background: rgba(255,255,255,0.14);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.setting-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+  margin: 14px 0;
+  font-size: 15px;
+}
+
+input[type="color"] {
+  width: 50px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  width: 142px;
+  accent-color: var(--accent-color);
+}
+
+.reset-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  background: rgba(255,255,255,0.16);
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.ui-hidden .top-actions,
+.ui-hidden .settings-panel {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .clock-area {
+    transform: translateY(4px);
+  }
+
+  .circle-wrap {
+    max-height: 58dvh;
+    margin-bottom: 12px;
+  }
+
+  .date {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .icon-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+
+  .settings-panel {
+    top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+  }
+}
+
+</style>
+</head>
+<body>
+  <div class="second-fill" id="secondFill" aria-hidden="true"></div>
+
+  <main class="app" id="app">
+    <section class="clock-area" aria-label="時計">
+      <div class="circle-wrap">
+        <svg class="hour-ring" viewBox="0 0 320 320" aria-hidden="true">
+          <circle class="ring-bg" cx="160" cy="160" r="135"></circle>
+          <circle class="ring-progress" id="hourCircle" cx="160" cy="160" r="135"></circle>
+        </svg>
+
+        <div class="time-layer">
+          <div class="time" id="time">00:00</div>
+          <div class="sub-label">この1時間の進み具合</div>
+        </div>
+      </div>
+
+      <section class="day-section" aria-label="今日の進み具合">
+        <div class="day-label">
+          <span>今日の進み具合</span>
+          <span id="dayPercent">0%</span>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill" id="dayBar"></div>
+        </div>
+      </section>
+
+      <div class="date" id="date">0000年0月0日</div>
+    </section>
+  </main>
+
+  <div class="top-actions" id="topActions">
+    <button class="icon-button" id="fullscreenButton" type="button" aria-label="全画面">⛶</button>
+    <button class="icon-button" id="settingsButton" type="button" aria-label="設定">⚙</button>
+  </div>
+
+  <aside class="settings-panel" id="settingsPanel" aria-label="設定パネル">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">表示設定</div>
+        <div class="panel-note">ダブルタップでボタン非表示</div>
+      </div>
+      <button class="close-button" id="closeSettingsButton" type="button" aria-label="閉じる">×</button>
+    </div>
+
+    <label class="setting-row">
+      <span>UIサイズ</span>
+      <input id="uiSize" type="range" min="80" max="140" step="1">
+    </label>
+
+    <label class="setting-row">
+      <span>背景</span>
+      <input id="bgColor" type="color">
+    </label>
+
+    <label class="setting-row">
+      <span>せり上がり</span>
+      <input id="riseColor" type="color">
+    </label>
+
+    <label class="setting-row">
+      <span>せり上がり濃さ</span>
+      <input id="riseOpacity" type="range" min="0" max="45" step="1">
+    </label>
+
+    <label class="setting-row">
+      <span>文字</span>
+      <input id="textColor" type="color">
+    </label>
+
+    <label class="setting-row">
+      <span>円・バー</span>
+      <input id="accentColor" type="color">
+    </label>
+
+    <label class="setting-row">
+      <span>下地ライン</span>
+      <input id="lineColor" type="color">
+    </label>
+
+    <button class="reset-button" id="resetButton" type="button">初期設定に戻す</button>
+  </aside>
+
+  <script>
+"use strict";
+
+const storageKey = "visualClockRestoredSettings_v1";
+
+const defaultSettings = {
+  bgColor: "#0f1115",
+  riseColor: "#ffffff",
+  riseOpacity: 14,
+  textColor: "#ffffff",
+  accentColor: "#ffffff",
+  lineColor: "#2a2d35",
+  uiSize: 112
+};
+
+let settings = loadSettings();
+
+const els = {
+  time: document.getElementById("time"),
+  date: document.getElementById("date"),
+  dayPercent: document.getElementById("dayPercent"),
+  dayBar: document.getElementById("dayBar"),
+  hourCircle: document.getElementById("hourCircle"),
+  secondFill: document.getElementById("secondFill"),
+  settingsButton: document.getElementById("settingsButton"),
+  settingsPanel: document.getElementById("settingsPanel"),
+  closeSettingsButton: document.getElementById("closeSettingsButton"),
+  fullscreenButton: document.getElementById("fullscreenButton"),
+  resetButton: document.getElementById("resetButton"),
+  uiSize: document.getElementById("uiSize"),
+  bgColor: document.getElementById("bgColor"),
+  riseColor: document.getElementById("riseColor"),
+  riseOpacity: document.getElementById("riseOpacity"),
+  textColor: document.getElementById("textColor"),
+  accentColor: document.getElementById("accentColor"),
+  lineColor: document.getElementById("lineColor")
+};
+
+const ringRadius = 135;
+const ringCircumference = 2 * Math.PI * ringRadius;
+els.hourCircle.style.strokeDasharray = String(ringCircumference);
+els.hourCircle.style.strokeDashoffset = String(ringCircumference);
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return { ...defaultSettings };
+    return { ...defaultSettings, ...JSON.parse(raw) };
+  } catch {
+    return { ...defaultSettings };
+  }
+}
+
+function saveSettings() {
+  localStorage.setItem(storageKey, JSON.stringify(settings));
+}
+
+function hexToRgba(hex, opacityPercent) {
+  const normalized = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : "#ffffff";
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  const a = Math.max(0, Math.min(100, Number(opacityPercent))) / 100;
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+function applySettings() {
+  const root = document.documentElement;
+
+  root.style.setProperty("--bg-color", settings.bgColor);
+  root.style.setProperty("--text-color", settings.textColor);
+  root.style.setProperty("--accent-color", settings.accentColor);
+  root.style.setProperty("--line-bg-color", settings.lineColor);
+  root.style.setProperty("--rise-bg", hexToRgba(settings.riseColor, settings.riseOpacity));
+
+  els.uiSize.value = settings.uiSize;
+  els.bgColor.value = settings.bgColor;
+  els.riseColor.value = settings.riseColor;
+  els.riseOpacity.value = settings.riseOpacity;
+  els.textColor.value = settings.textColor;
+  els.accentColor.value = settings.accentColor;
+  els.lineColor.value = settings.lineColor;
+
+  updateLayout();
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function updateLayout() {
+  const root = document.documentElement;
+  const width = window.innerWidth || document.documentElement.clientWidth;
+  const height = window.innerHeight || document.documentElement.clientHeight;
+  const scale = settings.uiSize / 100;
+
+  const availableCircleByHeight = height - 205;
+  const availableCircleByWidth = width * 0.88;
+
+  let circleSize = Math.min(availableCircleByHeight, availableCircleByWidth, 760);
+  circleSize = circleSize * scale;
+
+  const hardMax = Math.min(height - 185, width * 0.92, 820);
+  circleSize = clamp(circleSize, 240, Math.max(240, hardMax));
+
+  const timeSize = clamp(circleSize * 0.235, 58, 158);
+  const labelSize = clamp(circleSize * 0.043, 15, 30);
+  const dayLabelSize = clamp(circleSize * 0.043, 15, 29);
+  const dateSize = clamp(circleSize * 0.052, 17, 35);
+  const barWidth = clamp(circleSize * 1.18, Math.min(width * 0.78, 300), Math.min(width * 0.9, 820));
+  const barHeight = clamp(circleSize * 0.064, 20, 48);
+
+  root.style.setProperty("--circle-size", `${Math.round(circleSize)}px`);
+  root.style.setProperty("--time-size", `${Math.round(timeSize)}px`);
+  root.style.setProperty("--label-size", `${Math.round(labelSize)}px`);
+  root.style.setProperty("--day-label-size", `${Math.round(dayLabelSize)}px`);
+  root.style.setProperty("--date-size", `${Math.round(dateSize)}px`);
+  root.style.setProperty("--bar-width", `${Math.round(barWidth)}px`);
+  root.style.setProperty("--bar-height", `${Math.round(barHeight)}px`);
+}
+
+function syncSecondFill() {
+  const now = new Date();
+  const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
+
+  els.secondFill.style.animation = "none";
+  void els.secondFill.offsetHeight;
+  els.secondFill.style.animation = "riseMinute 60s linear infinite";
+  els.secondFill.style.animationDelay = `${-seconds}s`;
+}
+
+function updateClock() {
+  const now = new Date();
+
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = now.getSeconds();
+
+  els.time.textContent = `${hours}:${minutes}`;
+
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  els.date.textContent =
+    `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日（${weekdays[now.getDay()]}）`;
+
+  const hourProgress = (now.getMinutes() * 60 + seconds) / 3600;
+  els.hourCircle.style.strokeDashoffset = String(ringCircumference * (1 - hourProgress));
+
+  const secondsToday = now.getHours() * 3600 + now.getMinutes() * 60 + seconds;
+  const dayProgress = secondsToday / 86400;
+  els.dayBar.style.width = `${dayProgress * 100}%`;
+  els.dayPercent.textContent = `${Math.floor(dayProgress * 100)}%`;
+}
+
+function bindSetting(input, key, isNumber = false) {
+  input.addEventListener("input", () => {
+    settings[key] = isNumber ? Number(input.value) : input.value;
+    applySettings();
+    saveSettings();
+  });
+}
+
+bindSetting(els.uiSize, "uiSize", true);
+bindSetting(els.bgColor, "bgColor");
+bindSetting(els.riseColor, "riseColor");
+bindSetting(els.riseOpacity, "riseOpacity", true);
+bindSetting(els.textColor, "textColor");
+bindSetting(els.accentColor, "accentColor");
+bindSetting(els.lineColor, "lineColor");
+
+els.settingsButton.addEventListener("click", () => {
+  document.body.classList.remove("ui-hidden");
+  els.settingsPanel.classList.toggle("open");
+});
+
+els.closeSettingsButton.addEventListener("click", () => {
+  els.settingsPanel.classList.remove("open");
+});
+
+els.resetButton.addEventListener("click", () => {
+  settings = { ...defaultSettings };
+  applySettings();
+  saveSettings();
+  syncSecondFill();
+});
+
+els.fullscreenButton.addEventListener("click", async () => {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else if (document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+    }
+  } catch {
+    // iPhone SafariではFullscreen APIが使えない場合がある。
+    // ホーム画面に追加して開くと、よりアプリらしく表示できる。
+  }
+});
+
+let lastTap = 0;
+document.addEventListener("pointerup", (event) => {
+  const interactive = event.target.closest("button, input, label, .settings-panel");
+  if (interactive) return;
+
+  const now = Date.now();
+  if (now - lastTap < 320) {
+    els.settingsPanel.classList.remove("open");
+    document.body.classList.toggle("ui-hidden");
+  }
+  lastTap = now;
+});
+
+window.addEventListener("resize", updateLayout);
+window.addEventListener("orientationchange", () => {
+  setTimeout(updateLayout, 250);
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    updateClock();
+    syncSecondFill();
+  }
+});
+
+applySettings();
+syncSecondFill();
+updateClock();
+
+setInterval(updateClock, 1000);
+setInterval(syncSecondFill, 60 * 1000);
+
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    /* service worker omitted in single-file version */
+  });
+}
+
+</script>
+</body>
+</html>

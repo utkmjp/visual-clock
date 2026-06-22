@@ -1,41 +1,52 @@
-const elements = {
-  root: document.documentElement,
-  body: document.body,
-  time: document.getElementById("time"),
-  seconds: document.getElementById("seconds"),
-  date: document.getElementById("date"),
-  dayPercent: document.getElementById("dayPercent"),
-  secondLayer: document.getElementById("secondLayer"),
-  settingsButton: document.getElementById("settingsButton"),
-  panel: document.getElementById("panel"),
-  bgColor: document.getElementById("bgColor"),
-  riseColor: document.getElementById("riseColor"),
-  riseOpacity: document.getElementById("riseOpacity"),
-  textColor: document.getElementById("textColor"),
-  accentColor: document.getElementById("accentColor"),
-  resetButton: document.getElementById("resetButton"),
-};
+"use strict";
 
-const storageKey = "visual-clock-light-settings-v1";
+const storageKey = "visualClockRestoredSettings_v1";
 
-const defaults = {
+const defaultSettings = {
   bgColor: "#0f1115",
   riseColor: "#ffffff",
   riseOpacity: 14,
   textColor: "#ffffff",
   accentColor: "#ffffff",
+  lineColor: "#2a2d35",
+  uiSize: 112
 };
 
-const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 let settings = loadSettings();
-let lastSecond = -1;
+
+const els = {
+  time: document.getElementById("time"),
+  date: document.getElementById("date"),
+  dayPercent: document.getElementById("dayPercent"),
+  dayBar: document.getElementById("dayBar"),
+  hourCircle: document.getElementById("hourCircle"),
+  secondFill: document.getElementById("secondFill"),
+  settingsButton: document.getElementById("settingsButton"),
+  settingsPanel: document.getElementById("settingsPanel"),
+  closeSettingsButton: document.getElementById("closeSettingsButton"),
+  fullscreenButton: document.getElementById("fullscreenButton"),
+  resetButton: document.getElementById("resetButton"),
+  uiSize: document.getElementById("uiSize"),
+  bgColor: document.getElementById("bgColor"),
+  riseColor: document.getElementById("riseColor"),
+  riseOpacity: document.getElementById("riseOpacity"),
+  textColor: document.getElementById("textColor"),
+  accentColor: document.getElementById("accentColor"),
+  lineColor: document.getElementById("lineColor")
+};
+
+const ringRadius = 135;
+const ringCircumference = 2 * Math.PI * ringRadius;
+els.hourCircle.style.strokeDasharray = String(ringCircumference);
+els.hourCircle.style.strokeDashoffset = String(ringCircumference);
 
 function loadSettings() {
   try {
-    const saved = localStorage.getItem(storageKey);
-    return saved ? { ...defaults, ...JSON.parse(saved) } : { ...defaults };
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return { ...defaultSettings };
+    return { ...defaultSettings, ...JSON.parse(raw) };
   } catch {
-    return { ...defaults };
+    return { ...defaultSettings };
   }
 }
 
@@ -43,138 +54,181 @@ function saveSettings() {
   localStorage.setItem(storageKey, JSON.stringify(settings));
 }
 
-function hexToRgba(hex, opacity) {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.slice(0, 2), 16);
-  const g = parseInt(clean.slice(2, 4), 16);
-  const b = parseInt(clean.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+function hexToRgba(hex, opacityPercent) {
+  const normalized = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : "#ffffff";
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  const a = Math.max(0, Math.min(100, Number(opacityPercent))) / 100;
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
 function applySettings() {
-  elements.root.style.setProperty("--bg", settings.bgColor);
-  elements.root.style.setProperty("--text", settings.textColor);
-  elements.root.style.setProperty("--accent", settings.accentColor);
-  elements.root.style.setProperty("--rise", hexToRgba(settings.riseColor, settings.riseOpacity));
+  const root = document.documentElement;
 
-  elements.bgColor.value = settings.bgColor;
-  elements.riseColor.value = settings.riseColor;
-  elements.riseOpacity.value = settings.riseOpacity;
-  elements.textColor.value = settings.textColor;
-  elements.accentColor.value = settings.accentColor;
+  root.style.setProperty("--bg-color", settings.bgColor);
+  root.style.setProperty("--text-color", settings.textColor);
+  root.style.setProperty("--accent-color", settings.accentColor);
+  root.style.setProperty("--line-bg-color", settings.lineColor);
+  root.style.setProperty("--rise-bg", hexToRgba(settings.riseColor, settings.riseOpacity));
+
+  els.uiSize.value = settings.uiSize;
+  els.bgColor.value = settings.bgColor;
+  els.riseColor.value = settings.riseColor;
+  els.riseOpacity.value = settings.riseOpacity;
+  els.textColor.value = settings.textColor;
+  els.accentColor.value = settings.accentColor;
+  els.lineColor.value = settings.lineColor;
+
+  updateLayout();
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function updateLayout() {
+  const root = document.documentElement;
+  const width = window.innerWidth || document.documentElement.clientWidth;
+  const height = window.innerHeight || document.documentElement.clientHeight;
+  const scale = settings.uiSize / 100;
+
+  const availableCircleByHeight = height - 205;
+  const availableCircleByWidth = width * 0.88;
+
+  let circleSize = Math.min(availableCircleByHeight, availableCircleByWidth, 760);
+  circleSize = circleSize * scale;
+
+  const hardMax = Math.min(height - 185, width * 0.92, 820);
+  circleSize = clamp(circleSize, 240, Math.max(240, hardMax));
+
+  const timeSize = clamp(circleSize * 0.235, 58, 158);
+  const labelSize = clamp(circleSize * 0.043, 15, 30);
+  const dayLabelSize = clamp(circleSize * 0.043, 15, 29);
+  const dateSize = clamp(circleSize * 0.052, 17, 35);
+  const barWidth = clamp(circleSize * 1.18, Math.min(width * 0.78, 300), Math.min(width * 0.9, 820));
+  const barHeight = clamp(circleSize * 0.064, 20, 48);
+
+  root.style.setProperty("--circle-size", `${Math.round(circleSize)}px`);
+  root.style.setProperty("--time-size", `${Math.round(timeSize)}px`);
+  root.style.setProperty("--label-size", `${Math.round(labelSize)}px`);
+  root.style.setProperty("--day-label-size", `${Math.round(dayLabelSize)}px`);
+  root.style.setProperty("--date-size", `${Math.round(dateSize)}px`);
+  root.style.setProperty("--bar-width", `${Math.round(barWidth)}px`);
+  root.style.setProperty("--bar-height", `${Math.round(barHeight)}px`);
+}
+
+function syncSecondFill() {
+  const now = new Date();
+  const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
+
+  els.secondFill.style.animation = "none";
+  void els.secondFill.offsetHeight;
+  els.secondFill.style.animation = "riseMinute 60s linear infinite";
+  els.secondFill.style.animationDelay = `${-seconds}s`;
 }
 
 function updateClock() {
   const now = new Date();
-  const second = now.getSeconds();
 
-  if (second === lastSecond) return;
-  lastSecond = second;
-
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
   const seconds = now.getSeconds();
 
-  elements.time.textContent = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-  elements.seconds.textContent = `${String(seconds).padStart(2, "0")}秒`;
-  elements.date.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日（${weekdays[now.getDay()]}）`;
+  els.time.textContent = `${hours}:${minutes}`;
 
-  const secondsInHour = minutes * 60 + seconds;
-  const hourDeg = (secondsInHour / 3600) * 360;
-  elements.root.style.setProperty("--hour-deg", `${hourDeg}deg`);
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  els.date.textContent =
+    `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日（${weekdays[now.getDay()]}）`;
 
-  const secondsToday = hours * 3600 + minutes * 60 + seconds;
+  const hourProgress = (now.getMinutes() * 60 + seconds) / 3600;
+  els.hourCircle.style.strokeDashoffset = String(ringCircumference * (1 - hourProgress));
+
+  const secondsToday = now.getHours() * 3600 + now.getMinutes() * 60 + seconds;
   const dayProgress = secondsToday / 86400;
-  const percent = Math.floor(dayProgress * 100);
-  elements.root.style.setProperty("--day-percent", `${dayProgress * 100}%`);
-  elements.dayPercent.textContent = `${percent}%`;
+  els.dayBar.style.width = `${dayProgress * 100}%`;
+  els.dayPercent.textContent = `${Math.floor(dayProgress * 100)}%`;
 }
 
-function syncSecondLayer() {
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const now = new Date();
-  const elapsed = now.getSeconds() + now.getMilliseconds() / 1000;
-
-  if (reduceMotion) {
-    elements.secondLayer.style.transform = `scaleY(${elapsed / 60})`;
-    return;
-  }
-
-  elements.secondLayer.style.animation = "none";
-  elements.secondLayer.offsetHeight;
-  elements.secondLayer.style.animation = "rise-minute 60s linear infinite";
-  elements.secondLayer.style.animationDelay = `-${elapsed}s`;
+function bindSetting(input, key, isNumber = false) {
+  input.addEventListener("input", () => {
+    settings[key] = isNumber ? Number(input.value) : input.value;
+    applySettings();
+    saveSettings();
+  });
 }
 
-function setListeners() {
-  elements.settingsButton.addEventListener("click", () => {
-    elements.panel.classList.toggle("open");
-  });
+bindSetting(els.uiSize, "uiSize", true);
+bindSetting(els.bgColor, "bgColor");
+bindSetting(els.riseColor, "riseColor");
+bindSetting(els.riseOpacity, "riseOpacity", true);
+bindSetting(els.textColor, "textColor");
+bindSetting(els.accentColor, "accentColor");
+bindSetting(els.lineColor, "lineColor");
 
-  elements.bgColor.addEventListener("input", () => {
-    settings.bgColor = elements.bgColor.value;
-    applySettings();
-    saveSettings();
-  });
+els.settingsButton.addEventListener("click", () => {
+  document.body.classList.remove("ui-hidden");
+  els.settingsPanel.classList.toggle("open");
+});
 
-  elements.riseColor.addEventListener("input", () => {
-    settings.riseColor = elements.riseColor.value;
-    applySettings();
-    saveSettings();
-  });
+els.closeSettingsButton.addEventListener("click", () => {
+  els.settingsPanel.classList.remove("open");
+});
 
-  elements.riseOpacity.addEventListener("input", () => {
-    settings.riseOpacity = Number(elements.riseOpacity.value);
-    applySettings();
-    saveSettings();
-  });
+els.resetButton.addEventListener("click", () => {
+  settings = { ...defaultSettings };
+  applySettings();
+  saveSettings();
+  syncSecondFill();
+});
 
-  elements.textColor.addEventListener("input", () => {
-    settings.textColor = elements.textColor.value;
-    applySettings();
-    saveSettings();
-  });
-
-  elements.accentColor.addEventListener("input", () => {
-    settings.accentColor = elements.accentColor.value;
-    applySettings();
-    saveSettings();
-  });
-
-  elements.resetButton.addEventListener("click", () => {
-    settings = { ...defaults };
-    applySettings();
-    saveSettings();
-  });
-
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      syncSecondLayer();
-      updateClock();
+els.fullscreenButton.addEventListener("click", async () => {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else if (document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
     }
-  });
-
-  document.addEventListener("dblclick", () => {
-    elements.body.classList.toggle("hide-ui");
-  });
-}
-
-function registerServiceWorker() {
-  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  } catch {
+    // iPhone SafariではFullscreen APIが使えない場合がある。
+    // ホーム画面に追加して開くと、よりアプリらしく表示できる。
   }
-}
+});
 
-function startClock() {
-  updateClock();
-  const now = new Date();
-  const delay = 1020 - now.getMilliseconds();
-  window.setTimeout(startClock, delay);
-}
+let lastTap = 0;
+document.addEventListener("pointerup", (event) => {
+  const interactive = event.target.closest("button, input, label, .settings-panel");
+  if (interactive) return;
+
+  const now = Date.now();
+  if (now - lastTap < 320) {
+    els.settingsPanel.classList.remove("open");
+    document.body.classList.toggle("ui-hidden");
+  }
+  lastTap = now;
+});
+
+window.addEventListener("resize", updateLayout);
+window.addEventListener("orientationchange", () => {
+  setTimeout(updateLayout, 250);
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    updateClock();
+    syncSecondFill();
+  }
+});
 
 applySettings();
-syncSecondLayer();
-startClock();
-setInterval(syncSecondLayer, 60 * 1000);
-setListeners();
-registerServiceWorker();
+syncSecondFill();
+updateClock();
+
+setInterval(updateClock, 1000);
+setInterval(syncSecondFill, 60 * 1000);
+
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  });
+}

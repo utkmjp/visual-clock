@@ -1,29 +1,53 @@
-# 見える時計 軽量版
+# 見える時計 最終改良版（JSはTXT）
 
-GitHub Pagesにそのまま置ける、軽量な時計Webアプリです。
+これは、前の「最終改良版」に戻した時計アプリです。
 
-## ファイル構成
+入っている機能:
+- 秒数に合わせて背景が下からせり上がる
+- 0秒に戻ると背景も下に戻る
+- 色変更
+- UIサイズ変更
+- 全画面ボタン
+- ダブルタップでボタン非表示 / 再表示
+- 設定の自動保存
+- iPhoneのSafariでホーム画面に追加しやすい構成
 
-- `index.html`：画面本体
-- `style.css`：見た目
-- `script.js`：時計の処理
-- `manifest.json`：ホーム画面アプリ化用の設定
-- `service-worker.js`：オフライン用キャッシュ
-- `icon.svg`：アイコン
-- `apple-touch-icon.png`：iPhoneホーム画面用アイコン
+## GitHubに置くファイル
 
-## GitHub Pagesで公開する手順
+リポジトリ直下に以下を置いてください。
+
+- index.html
+- style.css
+- manifest.json
+- icon.svg
+- apple-touch-icon.png
+
+そして、TXTファイルはGitHub上で名前を変えて作ってください。
+
+- script_js.txt の中身 → script.js として作成
+- service_worker_js.txt の中身 → service-worker.js として作成
+
+※ ZIP内には .js ファイルを入れていません。
+iPhoneやブラウザで .js のダウンロードが止まることがあるため、今回は .txt にしてあります。
+
+## GitHubでの作り方
 
 1. GitHubで新しいリポジトリを作る
-2. このフォルダ内のファイルを全部、リポジトリの一番上にアップロードする
-3. リポジトリの `Settings` → `Pages` を開く
-4. `Deploy from a branch` を選ぶ
-5. Branch を `main`、Folder を `/root` にする
-6. 表示されたURLをiPhoneのSafariで開く
-7. Safariの共有ボタンから「ホーム画面に追加」する
+2. index.html / style.css / manifest.json / icon.svg / apple-touch-icon.png をアップロード
+3. script_js.txt を開いて中身をコピー
+4. GitHubで Add file → Create new file
+5. ファイル名を script.js にして貼り付けて保存
+6. service_worker_js.txt も同じように service-worker.js として作成
+7. Settings → Pages
+8. Source: Deploy from a branch
+9. Branch: main / root
+10. 公開URLをiPhoneのSafariで開く
+11. 共有ボタン → ホーム画面に追加
 
-## 使い方
+## 注意
 
-- 右上の歯車で色を変更
-- 画面をダブルクリック/ダブルタップでUIを隠す
-- 色設定は端末に保存されます
+index.html は script.js と service-worker.js を読むように作ってあります。
+そのため、GitHub上では必ず script.js / service-worker.js という名前で作ってください。
+
+index_single_file_reference.html は確認用です。
+GitHub Pagesで使う本体は index.html です。
