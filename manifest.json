@@ -1,7 +1,7 @@
 {
   "name": "見える時計",
   "short_name": "見える時計",
-  "description": "置いとくだけで時間の進み具合が見える縦画面時計アプリ",
+  "description": "画面内に収まる縦画面時計アプリ",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

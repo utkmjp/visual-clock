@@ -1,6 +1,31 @@
-"use strict";
+const els = {
+  app: document.getElementById("app"),
+  secondFill: document.getElementById("secondFill"),
+  hourCircle: document.getElementById("hourCircle"),
+  time: document.getElementById("time"),
+  date: document.getElementById("date"),
+  dayBar: document.getElementById("dayBar"),
+  dayPercent: document.getElementById("dayPercent"),
+  settingsButton: document.getElementById("settingsButton"),
+  closeSettingsButton: document.getElementById("closeSettingsButton"),
+  settingsPanel: document.getElementById("settingsPanel"),
+  fullscreenButton: document.getElementById("fullscreenButton"),
+  uiSize: document.getElementById("uiSize"),
+  bgColor: document.getElementById("bgColor"),
+  riseColor: document.getElementById("riseColor"),
+  riseOpacity: document.getElementById("riseOpacity"),
+  textColor: document.getElementById("textColor"),
+  accentColor: document.getElementById("accentColor"),
+  lineColor: document.getElementById("lineColor"),
+  resetButton: document.getElementById("resetButton")
+};
 
-const storageKey = "visualClockVerticalCleanSettings_v1";
+const radius = 135;
+const circumference = 2 * Math.PI * radius;
+els.hourCircle.style.strokeDasharray = circumference;
+els.hourCircle.style.strokeDashoffset = circumference;
+
+const storageKey = "visualClockVerticalSafeSettings_v1";
 
 const defaultSettings = {
   bgColor: "#0f1115",
@@ -9,42 +34,20 @@ const defaultSettings = {
   textColor: "#ffffff",
   accentColor: "#ffffff",
   lineColor: "#2a2d35",
-  uiSize: 145
+  uiSize: 118
 };
 
 let settings = loadSettings();
 
-const els = {
-  time: document.getElementById("time"),
-  date: document.getElementById("date"),
-  dayPercent: document.getElementById("dayPercent"),
-  dayBar: document.getElementById("dayBar"),
-  hourCircle: document.getElementById("hourCircle"),
-  secondFill: document.getElementById("secondFill"),
-  settingsButton: document.getElementById("settingsButton"),
-  settingsPanel: document.getElementById("settingsPanel"),
-  closeSettingsButton: document.getElementById("closeSettingsButton"),
-  fullscreenButton: document.getElementById("fullscreenButton"),
-  resetButton: document.getElementById("resetButton"),
-  uiSize: document.getElementById("uiSize"),
-  bgColor: document.getElementById("bgColor"),
-  riseColor: document.getElementById("riseColor"),
-  riseOpacity: document.getElementById("riseOpacity"),
-  textColor: document.getElementById("textColor"),
-  accentColor: document.getElementById("accentColor"),
-  lineColor: document.getElementById("lineColor")
-};
-
-const ringRadius = 135;
-const ringCircumference = 2 * Math.PI * ringRadius;
-els.hourCircle.style.strokeDasharray = String(ringCircumference);
-els.hourCircle.style.strokeDashoffset = String(ringCircumference);
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
 
 function loadSettings() {
   try {
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) return { ...defaultSettings };
-    return { ...defaultSettings, ...JSON.parse(raw) };
+    const saved = localStorage.getItem(storageKey);
+    if (!saved) return { ...defaultSettings };
+    return { ...defaultSettings, ...JSON.parse(saved) };
   } catch {
     return { ...defaultSettings };
   }
@@ -55,12 +58,16 @@ function saveSettings() {
 }
 
 function hexToRgba(hex, opacityPercent) {
-  const normalized = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : "#ffffff";
-  const r = parseInt(normalized.slice(1, 3), 16);
-  const g = parseInt(normalized.slice(3, 5), 16);
-  const b = parseInt(normalized.slice(5, 7), 16);
-  const a = Math.max(0, Math.min(100, Number(opacityPercent))) / 100;
+  const safeHex = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : "#ffffff";
+  const r = parseInt(safeHex.slice(1, 3), 16);
+  const g = parseInt(safeHex.slice(3, 5), 16);
+  const b = parseInt(safeHex.slice(5, 7), 16);
+  const a = clamp(Number(opacityPercent), 0, 100) / 100;
   return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+function updateMutedColor() {
+  document.documentElement.style.setProperty("--muted-color", hexToRgba(settings.textColor, 68));
 }
 
 function applySettings() {
@@ -71,43 +78,47 @@ function applySettings() {
   root.style.setProperty("--accent-color", settings.accentColor);
   root.style.setProperty("--line-bg-color", settings.lineColor);
   root.style.setProperty("--rise-bg", hexToRgba(settings.riseColor, settings.riseOpacity));
+  updateMutedColor();
 
-  els.uiSize.value = settings.uiSize;
   els.bgColor.value = settings.bgColor;
   els.riseColor.value = settings.riseColor;
   els.riseOpacity.value = settings.riseOpacity;
   els.textColor.value = settings.textColor;
   els.accentColor.value = settings.accentColor;
   els.lineColor.value = settings.lineColor;
+  els.uiSize.value = settings.uiSize;
 
   updateLayout();
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
 }
 
 function updateLayout() {
   const root = document.documentElement;
   const width = window.innerWidth || document.documentElement.clientWidth;
   const height = window.innerHeight || document.documentElement.clientHeight;
-  const scale = settings.uiSize / 100;
 
-  // 縦画面専用。横画面用の回転・横並び計算は使わない。
-  // 文言を削除したぶん、時計本体に使える高さを少し増やす。
-  const reservedBelow = clamp(height * 0.15, 100, 170);
-  const circleBase = Math.min(width * 0.985, height - reservedBelow, 840);
-  const hardMax = Math.min(width * 0.995, height - 96, 880);
+  // UIサイズは「大きく見せる希望値」として扱う。
+  // ただし最終サイズは必ず画面内に収まるように上限をかける。
+  const scale = clamp(settings.uiSize / 100, 0.8, 1.5);
 
-  let circleSize = circleBase * scale;
-  circleSize = clamp(circleSize, 290, Math.max(290, hardMax));
+  const topReserve = clamp(height * 0.11, 76, 108);
+  const bottomReserve = clamp(height * 0.025, 12, 26);
+  const dayBlock = clamp(height * 0.105, 74, 112);
+  const dateBlock = clamp(height * 0.052, 34, 52);
+  const gaps = clamp(height * 0.055, 34, 62);
 
-  const textBoost = clamp(scale, 1, 1.8);
-  const timeSize = clamp(circleSize * (0.335 + (textBoost - 1) * 0.10), 104, Math.min(width * 0.55, 230));
-  const dayLabelSize = clamp(circleSize * 0.048, 17, 32);
-  const dateSize = clamp(circleSize * 0.058, 20, 38);
-  const barWidth = clamp(circleSize * 1.23, Math.min(width * 0.86, 320), Math.min(width * 0.96, 860));
-  const barHeight = clamp(circleSize * 0.072, 24, 54);
+  const availableForCircle = height - topReserve - bottomReserve - dayBlock - dateBlock - gaps;
+  const circleHardMax = Math.min(width * 0.88, availableForCircle, 520);
+  const circleWanted = circleHardMax * (0.84 + (scale - 1) * 0.28);
+  const circleSize = clamp(circleWanted, 230, Math.max(230, circleHardMax));
+
+  // ここが一番大事。数字は必ず円と画面幅の中に収める。
+  const timeSize = clamp(circleSize * 0.285, 64, Math.min(circleSize * 0.32, width * 0.245, 132));
+
+  const dayLabelSize = clamp(width * 0.047, 15, 24);
+  const dateSize = clamp(width * 0.057, 18, 30);
+  const barWidth = clamp(width * 0.78, 280, Math.min(width * 0.92, 660));
+  const barHeight = clamp(circleSize * 0.075, 22, 38);
+  const gapMain = clamp(height * 0.026, 14, 28);
 
   root.style.setProperty("--circle-size", `${Math.round(circleSize)}px`);
   root.style.setProperty("--time-size", `${Math.round(timeSize)}px`);
@@ -115,16 +126,16 @@ function updateLayout() {
   root.style.setProperty("--date-size", `${Math.round(dateSize)}px`);
   root.style.setProperty("--bar-width", `${Math.round(barWidth)}px`);
   root.style.setProperty("--bar-height", `${Math.round(barHeight)}px`);
+  root.style.setProperty("--gap-main", `${Math.round(gapMain)}px`);
 }
 
 function syncSecondFill() {
   const now = new Date();
-  const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
-
+  const secondProgress = (now.getSeconds() + now.getMilliseconds() / 1000) / 60;
   els.secondFill.style.animation = "none";
+  els.secondFill.style.height = `${secondProgress * 100}%`;
   void els.secondFill.offsetHeight;
-  els.secondFill.style.animation = "riseMinute 60s linear infinite";
-  els.secondFill.style.animationDelay = `${-seconds}s`;
+  els.secondFill.style.animation = `riseMinute ${60 - secondProgress * 60}s linear forwards`;
 }
 
 function updateClock() {
@@ -133,6 +144,7 @@ function updateClock() {
   const hours = String(now.getHours()).padStart(2, "0");
   const minutes = String(now.getMinutes()).padStart(2, "0");
   const seconds = now.getSeconds();
+  const milliseconds = now.getMilliseconds();
 
   els.time.textContent = `${hours}:${minutes}`;
 
@@ -140,33 +152,52 @@ function updateClock() {
   els.date.textContent =
     `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日（${weekdays[now.getDay()]}）`;
 
-  const hourProgress = (now.getMinutes() * 60 + seconds) / 3600;
-  els.hourCircle.style.strokeDashoffset = String(ringCircumference * (1 - hourProgress));
+  const hourProgress =
+    (now.getMinutes() * 60 + seconds + milliseconds / 1000) / 3600;
 
-  const secondsToday = now.getHours() * 3600 + now.getMinutes() * 60 + seconds;
+  els.hourCircle.style.strokeDashoffset =
+    circumference * (1 - hourProgress);
+
+  const secondsToday =
+    now.getHours() * 3600 +
+    now.getMinutes() * 60 +
+    seconds +
+    milliseconds / 1000;
+
   const dayProgress = secondsToday / 86400;
+  const percent = Math.floor(dayProgress * 100);
+
   els.dayBar.style.width = `${dayProgress * 100}%`;
-  els.dayPercent.textContent = `${Math.floor(dayProgress * 100)}%`;
+  els.dayPercent.textContent = `${percent}%`;
 }
 
-function bindSetting(input, key, isNumber = false) {
+function bindColorInput(input, key) {
   input.addEventListener("input", () => {
-    settings[key] = isNumber ? Number(input.value) : input.value;
+    settings[key] = input.value;
     applySettings();
     saveSettings();
   });
 }
 
-bindSetting(els.uiSize, "uiSize", true);
-bindSetting(els.bgColor, "bgColor");
-bindSetting(els.riseColor, "riseColor");
-bindSetting(els.riseOpacity, "riseOpacity", true);
-bindSetting(els.textColor, "textColor");
-bindSetting(els.accentColor, "accentColor");
-bindSetting(els.lineColor, "lineColor");
+bindColorInput(els.bgColor, "bgColor");
+bindColorInput(els.riseColor, "riseColor");
+bindColorInput(els.textColor, "textColor");
+bindColorInput(els.accentColor, "accentColor");
+bindColorInput(els.lineColor, "lineColor");
+
+els.riseOpacity.addEventListener("input", () => {
+  settings.riseOpacity = Number(els.riseOpacity.value);
+  applySettings();
+  saveSettings();
+});
+
+els.uiSize.addEventListener("input", () => {
+  settings.uiSize = Number(els.uiSize.value);
+  applySettings();
+  saveSettings();
+});
 
 els.settingsButton.addEventListener("click", () => {
-  document.body.classList.remove("ui-hidden");
   els.settingsPanel.classList.toggle("open");
 });
 
@@ -195,39 +226,43 @@ els.fullscreenButton.addEventListener("click", async () => {
 });
 
 let lastTap = 0;
-document.addEventListener("pointerup", (event) => {
-  const interactive = event.target.closest("button, input, label, .settings-panel");
-  if (interactive) return;
-
+document.addEventListener("pointerup", () => {
   const now = Date.now();
   if (now - lastTap < 320) {
-    els.settingsPanel.classList.remove("open");
     document.body.classList.toggle("ui-hidden");
+    els.settingsPanel.classList.remove("open");
   }
   lastTap = now;
 });
 
-window.addEventListener("resize", updateLayout);
+window.addEventListener("resize", () => {
+  updateLayout();
+  syncSecondFill();
+});
+
 window.addEventListener("orientationchange", () => {
-  setTimeout(updateLayout, 250);
+  setTimeout(() => {
+    updateLayout();
+    syncSecondFill();
+  }, 250);
 });
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
+    updateLayout();
     updateClock();
     syncSecondFill();
   }
 });
 
-applySettings();
-syncSecondFill();
-updateClock();
-
-setInterval(updateClock, 1000);
-setInterval(syncSecondFill, 60 * 1000);
-
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./service-worker.js").catch(() => {});
   });
 }
+
+applySettings();
+syncSecondFill();
+updateClock();
+setInterval(updateClock, 1000);
+setInterval(syncSecondFill, 60000);
